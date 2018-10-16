@@ -1,0 +1,100 @@
+{
+  "kernel": "python",
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "**Recuerde no agregar o quitar celdas en este notebook, ni modificar su tipo. Si lo hace, el sistema automaticamente lo calificar\u00e1 con cero punto cero (0.0)**"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "Obtenga las letras asociadas a cada clave para el siguiente archivo."
+    },
+    {
+      "cell_type": "code",
+      "grade": false,
+      "source": "%%writefile input.txt\n0 \t C,F,A,B,D,I,H\n1 \t A,H,C,I,F,D,B\n2 \t B,H,I,F,G\n3 \t C,B,D\n4 \t D,C,I,G,H\n5 \t B,D,C,H,A\n6 \t H,D,C,B,G,F,D\n7 \t F,A,G,C,B,D,H,I\n8 \t F,A,I,B,D\n9 \t F,A,B,D,C,D,G,I\n10 \t D,B,A,C,H\n11 \t G,D,B,H,I,C,F\n12 \t D,D,C,F,B,A,H,G\n13 \t F,A,D\n14 \t D,A,C,G\n15 \t H,A,F,D,B,C,G,I\n16 \t A,I,B,D\n17 \t C,B,G,A,D,H,F\n18 \t I,B,A,H,D,F\n19 \t B,D,F,D,I\n20 \t C,B,H,F,I,G,D,D\n21 \t F,A,B,C,G,D\n22 \t I,G,F,C,H,B\n23 \t H,F,C,B,D,D,A\n24 \t F,D,G,A,H\n25 \t G,H,B,C,A,F,I\n26 \t G,F,B,A,H,D,D,I\n27 \t B,A,H,I,D,G,F\n28 \t A,H,D,F,C\n29 \t C,D,A,F,G,B,H,D"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "## Mapper"
+    },
+    {
+      "cell_type": "code",
+      "grade": true,
+      "test": false,
+      "execution_count": 2,
+      "points": 0,
+      "source": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": "Writing mapper.py\n"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "## Reducer"
+    },
+    {
+      "cell_type": "code",
+      "grade": true,
+      "test": false,
+      "execution_count": 3,
+      "points": 0,
+      "source": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": "Writing reducer.py\n"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "## Ejecuci\u00f3n"
+    },
+    {
+      "cell_type": "code",
+      "grade": true,
+      "test": true,
+      "execution_count": 4,
+      "points": 5,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": "A\t1,18,26,21,10,7,0,12,25,8,27,13,14,15,24,29,16,28,23,9,17,5\nB\t22,19,20,21,1,29,2,3,5,6,7,27,8,9,26,11,12,0,25,15,16,17,23,18,10\nC\t0,29,28,25,23,22,21,20,17,15,14,12,11,10,9,7,6,5,4,3,1\nD\t19,19,18,17,23,23,1,16,24,15,14,13,29,12,12,11,10,9,9,26,26,8,7,27,6,0,6,5,4,3,28,21,20,20,29\nF\t18,25,6,20,9,0,1,23,11,8,24,27,28,17,21,19,13,29,26,12,22,7,15,2\nG\t22,6,27,26,11,25,2,9,20,24,14,21,15,12,29,17,7,4\nH\t25,12,1,11,10,26,0,2,20,27,7,22,6,18,23,17,5,28,4,24,15,29\nI\t7,16,25,15,8,26,2,9,11,4,22,18,20,0,27,19,1\n"
+        }
+      ],
+      "source": "%%bash\nrm -rf output\nSTREAM=$HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar\nchmod +x mapper.py\nchmod +x reducer.py\nhadoop jar $STREAM -input input.txt -output output  -mapper mapper.py -reducer reducer.py\ncat output/part-00000\n## __test5__"
+    },
+    {
+      "cell_type": "code",
+      "grade": false,
+      "source": "!rm -rf mapper.py reducer.py output input.txt"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "---"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "Para realizar la evaluaci\u00f3n autom\u00e1tica de este libro:\n\n* Abra un Terminal.\n* Asegurece que esat en la misma carpeta que contiene este notebook.\n* Salve el notebook.\n* Ejecute el siguiente comando:\n\n      ./gradetool 12-tarea-7.ipynb"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "---"
+    }
+  ]
+}

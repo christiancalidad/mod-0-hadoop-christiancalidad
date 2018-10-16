@@ -1,0 +1,100 @@
+{
+  "kernel": "python",
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "**Recuerde no agregar o quitar celdas en este notebook, ni modificar su tipo. Si lo hace, el sistema automaticamente lo calificar\u00e1 con cero punto cero (0.0)**"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "Ordene el archivo por letra y valor (3ra columna)."
+    },
+    {
+      "cell_type": "code",
+      "grade": false,
+      "source": "%%writefile input.txt\nB   1999-08-28   14\nE   1999-12-06   12\nE   1993-07-21   9\nC   1991-02-12   13\nE   1995-04-25   2\nA   1992-08-22   14\nB   1999-06-11   121\nE   1993-01-27   9\nE   1999-09-10   11\nE   1990-05-03   16\nE   1994-02-14   10\nA   1988-04-27   121\nA   1990-10-06   10\nE   1985-02-12   16\nE   1998-09-14   2\nB   1994-08-30   17\nA   1997-12-15   13\nB   1995-08-23   1\nB   1998-11-22   131\nB   1997-04-09   14\nE   1993-12-27   18\nE   1999-01-14   15\nA   1992-09-19   8\nB   1993-03-02   14\nB   1999-10-21   13\nA   1990-08-31   12\nC   1994-01-25   10\nE   1990-02-09   18\nA   1990-09-26   8\nA   1993-05-08   16\nB   1995-09-06   14\nE   1991-02-18   141\nA   1993-01-11   14\nA   1990-07-22   0\nC   1994-09-09   15\nC   1994-07-27   104\nD   1990-10-10   15\nA   1990-09-05   11\nB   1991-10-01   9\nA   1994-10-25   13"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "## Mapper"
+    },
+    {
+      "cell_type": "code",
+      "grade": true,
+      "test": false,
+      "execution_count": 2,
+      "points": 0,
+      "source": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": "Writing mapper.py\n"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "## Reducer"
+    },
+    {
+      "cell_type": "code",
+      "grade": true,
+      "test": false,
+      "execution_count": 3,
+      "points": 0,
+      "source": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": "Writing reducer.py\n"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "## Ejecuci\u00f3n"
+    },
+    {
+      "cell_type": "code",
+      "grade": true,
+      "test": true,
+      "execution_count": 4,
+      "points": 5,
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": "A   1990-07-22   0\t\nA   1990-09-26   8\t\nA   1992-09-19   8\t\nA   1990-10-06   10\t\nA   1990-09-05   11\t\nA   1990-08-31   12\t\nA   1997-12-15   13\t\nA   1994-10-25   13\t\nA   1993-01-11   14\t\nA   1992-08-22   14\t\nA   1993-05-08   16\t\nA   1988-04-27   121\t\nB   1995-08-23   1\t\nB   1991-10-01   9\t\nB   1999-10-21   13\t\nB   1997-04-09   14\t\nB   1995-09-06   14\t\nB   1993-03-02   14\t\nB   1999-08-28   14\t\nB   1994-08-30   17\t\nB   1999-06-11   121\t\nB   1998-11-22   131\t\nC   1994-01-25   10\t\nC   1991-02-12   13\t\nC   1994-09-09   15\t\nC   1994-07-27   104\t\nD   1990-10-10   15\t\nE   1998-09-14   2\t\nE   1995-04-25   2\t\nE   1993-07-21   9\t\nE   1993-01-27   9\t\nE   1994-02-14   10\t\nE   1999-09-10   11\t\nE   1999-12-06   12\t\nE   1999-01-14   15\t\nE   1990-05-03   16\t\nE   1985-02-12   16\t\nE   1990-02-09   18\t\nE   1993-12-27   18\t\nE   1991-02-18   141\t\n"
+        }
+      ],
+      "source": "%%bash\nrm -rf output\nSTREAM=$HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar\nchmod +x mapper.py\nchmod +x reducer.py\nhadoop jar $STREAM -input input.txt -output output  -mapper mapper.py -reducer reducer.py\ncat output/part-00000\n## __test5__"
+    },
+    {
+      "cell_type": "code",
+      "grade": false,
+      "source": "!rm -rf mapper.py reducer.py output input.txt"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "---"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "Para realizar la evaluaci\u00f3n autom\u00e1tica de este libro:\n\n* Abra un Terminal.\n* Asegurece que esat en la misma carpeta que contiene este notebook.\n* Salve el notebook.\n* Ejecute el siguiente comando:\n\n      ./gradetool 09-tarea-4.ipynb"
+    },
+    {
+      "cell_type": "markdown",
+      "grade": false,
+      "source": "---"
+    }
+  ]
+}
