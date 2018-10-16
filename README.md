@@ -1,4 +1,4 @@
-# AGD-2-Hadoop
+# Módulo sobre Apache Hadoop
 
 **Juan David Velásquez Henao**    
 jdvelasq@unal.edu.co  
