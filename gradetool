@@ -1,0 +1,369 @@
+#!/usr/bin/env python
+
+import argparse
+import nbformat 
+import os 
+import os.path 
+import sys
+import json
+
+
+__BEGIN__ = ','.join([ '## __begin{}__'.format(i) for i in range(11)]).split(',')
+__BEGIN__ += ','.join([ '-- __begin{}__'.format(i) for i in range(11)]).split(',')
+
+__TEST__ = ','.join([ '## __test{}__'.format(i) for i in range(11)]).split(',')
+__TEST__ += ','.join([ '-- __test{}__'.format(i) for i in range(11)]).split(',')
+
+__END__ = ['## __end__', '-- __end__']
+
+##
+##
+## Student version of the notebook
+##
+##
+def create_student_nb(ifile, ofile):
+    """
+    infile: teacher's notebook
+    outfile: student's notebook
+    """
+    nb = nbformat.read(ifile,  as_version=4)
+
+    for i in range(len(nb.cells)):
+
+        if nb.cells[i].cell_type == 'code':
+
+            ## borra la numeración
+            nb.cells[i].execution_count = None  
+
+            ## borra la salida
+            if len(nb.cells[i].outputs) != 0:
+                nb.cells[i].outputs = []
+
+            ## borra el codigo de solucion
+            if len(nb.cells[i].source) != 0:
+
+                source_in = nb.cells[i].source.splitlines()
+                source_out = []
+
+                is_ok = True
+
+                for j in range(len(source_in)):
+
+                    if source_in[j].strip() in __BEGIN__:
+                        is_ok = False
+                        if source_in[j].strip()[:2] == '##':
+                            source_out.append('##  >>> Write your answer here <<<')    
+                        else:
+                            source_out.append('-- >>> Write your answer here <<<')    
+
+                    if is_ok == True and source_in[j].strip() not in __TEST__ :
+                        source_out.append(source_in[j])
+
+                    if source_in[j].strip() in __END__:
+                        is_ok = True
+
+                if source_out != []:
+                    nb.cells[i].source = ['\n'.join(source_out)]
+                else:
+                    nb.cells[i].source = []
+
+    nbformat.write(nb, ofile)
+
+##
+##
+## JSON version of the notebook with the
+## correct results for evaluation
+##
+##
+def create_student_json(ifile, jfile):
+    ##
+    def is_hw_cell(source):
+        source = source.splitlines()
+        source = [s.strip() for s in source]
+        for s in source:
+            if s in __BEGIN__:
+                return True    
+        return False   
+    ##
+    def is_test_cell(source):
+        source = source.splitlines()
+        source = [s.strip() for s in source]
+        for s in source:
+            if s in __TEST__:
+                return True    
+        return False    
+    ##
+    def get_points(source):
+        source = source.splitlines()
+        source = [s.strip() for s in source]
+        for s in source:
+            if s in __BEGIN__:
+                points = s.strip()
+                points = points[10:]
+                points = points[:-2]
+                return int(points)
+            if s in __TEST__:
+                points = s.strip()
+                points = points[9:]
+                points = points[:-2]
+                return int(points)
+        return 1
+    ##
+    ## body
+    ##
+    nb = nbformat.read(ifile, as_version=4)
+
+    jdata = {}
+    jdata['kernel'] = nb.metadata.language_info.name
+    jdata['cells'] = []
+    
+    for cell in nb.cells:
+        #
+        stdcell = {}
+        stdcell['cell_type'] = cell.cell_type
+        #
+        if cell.cell_type == 'code':
+            if is_hw_cell(cell.source):
+                stdcell['grade'] = True
+                stdcell['test'] = False
+                stdcell['execution_count'] = cell.execution_count
+                stdcell['points'] = get_points(cell.source)
+                stdcell['source'] = None
+                stdcell['outputs'] = cell.outputs
+            elif is_test_cell(cell.source):
+                stdcell['grade'] = True
+                stdcell['test'] = True
+                stdcell['execution_count'] = cell.execution_count
+                stdcell['points'] = get_points(cell.source)
+                stdcell['outputs'] = cell.outputs
+                stdcell['source'] = cell.source
+            else:
+                stdcell['grade'] = False
+                stdcell['source'] = cell.source    
+        else:
+            stdcell['grade'] = False
+            stdcell['source'] = cell.source
+        #
+        jdata['cells'].append(stdcell)
+    #
+    with open(jfile, 'w') as outfile:
+        outfile.write(json.dumps(jdata, indent=2))
+
+##
+##
+## Homework grading
+##
+##
+class objdict(dict):
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
+
+#    def __setattr__(self, name, value):
+#        self[name] = value
+def dict2obj(d):
+    for k in d.keys():
+        if isinstance(d[k], list):
+            for i in range(len(d[k])):
+                if isinstance(d[k][i], dict):
+                    d[k][i] = dict2obj(d[k][i])
+        if isinstance(d[k], dict):
+            d[k] = dict2obj(d[k])
+    return objdict(d)
+
+
+
+def grade_student_nb(ifile, jfile):
+
+    def comment(s):
+        s = s.splitlines()
+        for u in s:
+            print('Comment :=>> ' + u)
+
+    def grade(num):
+        print('\033[1mGrade :=>> ' + str(num) + '\033[0m')
+
+    def clear_text(text):
+        if isinstance(text, list):
+            if len(text) > 0:
+                text = text[0].text
+            else:
+                text = ''
+        if len(text):
+            text = text.split()
+            return ' '.join(text)
+        return text
+    
+
+    comment(' ')
+    comment('\033[1mGRADING ' + ifile + '\033[0m')
+    comment(' ')
+
+    nb = nbformat.read(ifile, as_version=4)
+
+    with open(jfile, 'r') as infile:
+        jdata = json.load(infile)
+    jdata = dict2obj(jdata)
+    ##
+    ## Kernel check
+    ##
+    if jdata.kernel != nb.metadata.language_info.name:
+        msg = '\033[91m[Fatal Error] INCORRECT KERNEL:  Found={},  Expected={}\033[0m'
+        msg = msg.format(nb.metadata.language_info.name, jdata.kernel)
+        comment(msg)
+        grade(0)
+        return
+
+    ##
+    ## Number of cells check
+    ##
+    if len(jdata.cells) != len(nb.cells):
+        msg = '\033[91m[Fatal Error] DIFFERENT NUMBER OF CELLS:  Found={},  Expected={}\033[0m'
+        msg = msg.format(len(nb.cells), len(jdata.cells))
+        comment(msg)
+        grade(0)
+        return
+
+    ##
+    ## Cell type check
+    ##
+    for i in range(len(nb.cells)):
+        if jdata.cells[i].cell_type != nb.cells[i].cell_type:
+            msg = '\033[91m[Fatal Error] DIFFERENT CELL TYPE:  Cell={},  Found={},  Expected={}\033[0m'
+            msg = msg.format(str(i), nb.cells[i].cell_type, jdata['cells'][i].cell_type)
+            comment(msg)
+            grade(0)
+            return
+
+    ##
+    ## Integrity of test cells  '## __test*__'
+    ##
+    for i in range(len(nb.cells)):
+        if jdata.cells[i].grade is True and jdata.cells[i].test is True:
+            nb.cells[i].source = jdata['cells'][i].source
+
+    ##
+    ## Saves the student's notebook for running
+    ##
+    nbformat.write(nb, '.nb.ipynb')
+    os.system("jupyter nbconvert --to=notebook --inplace --ExecutePreprocessor.enabled=True .nb.ipynb  >& /dev/null ")
+    nb = nbformat.read('.nb.ipynb', as_version=4)
+    os.remove('.nb.ipynb')
+    
+    ##
+    ## Grading
+    ##
+    sum_points = 0
+    tot_points = 0
+
+    for i in range(len(nb.cells)):
+
+        if jdata['cells'][i].grade is True:
+            
+            ## points per cell.
+            points_per_cell = jdata['cells'][i].points
+            
+            ## maximum number of points per notebook
+            tot_points += points_per_cell
+
+            ## execution number
+            execution_count = str(jdata['cells'][i].execution_count)
+
+            ## grading
+            expected_text = clear_text(jdata['cells'][i].outputs)
+            found_text = clear_text(nb.cells[i].outputs)
+            if expected_text == found_text:
+                sum_points += points_per_cell
+                comment('Corrent answer for cell In[' + execution_count + ']')
+            else:
+                comment('\033[91mIncorrent answer for cell In[' + execution_count + ']\033[0m')
+                comment('\033[91m  Expected:\033[0m')
+                text = jdata['cells'][i].outputs 
+                if isinstance(text, list):
+                    if len(text) > 0:
+                        text = text[0].text
+                    else:
+                        text = '[empty]'
+                text = text.splitlines()
+                for line in text:
+                    comment('    ' + line)
+                comment('')
+                comment('\033[91m  Found:\033[0m')
+                text = nb.cells[i].outputs 
+                if isinstance(text, list):
+                    if len(text) > 0:
+                        text = text[0].text
+                    else:
+                        text = '[empty]'
+                text = text.splitlines()
+                for line in text:
+                    comment('    ' + line)
+                comment('')
+
+    grade(min(round(float(sum_points) / float(tot_points) * 5.0, 1), 5.0))
+
+
+##
+## main program
+##
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-o', '--output', help='output directory')
+    parser.add_argument('ipynb', nargs='*', help='notebook/dir to process')
+    args = parser.parse_args()
+
+    if args.output is not None:
+        if os.path.exists(args.output) and os.path.isdir(args.output) is False:
+            print("Fatal error: '" + args.output+"' must be a directory")
+            exit(2)
+        
+    for arg in args.ipynb:
+        if os.path.isdir(arg):
+            print("Fatal error: '" + arg + "' must be a notebook")
+            exit(2)
+
+    infiles = []
+    outfiles = []
+    jsonfiles = []
+
+    ##
+    ## generate filenames
+    ##
+    infiles = args.ipynb.copy()
+    jsonfiles = [x[:-5] + 'json' for x in infiles]
+    if args.output is not None:
+        if args.output[-1] != '/':
+            args.output += '/'
+        outfiles = [args.output + x for x in infiles]
+        jsonfiles = [args.output + x for x in jsonfiles]
+
+
+    if args.output is not None:
+        ##
+        ## generates student notebooks
+        ##
+        for ifile, jfile, ofile in zip(infiles, jsonfiles, outfiles):
+
+            print('[gradetool] processing ' + ifile)
+            os.system("jupyter nbconvert --to=notebook --inplace --ExecutePreprocessor.enabled=True " + ifile + ' >& /dev/null')
+            filepath = os.path.dirname(jfile)
+            if not os.path.exists(filepath):
+                os.makedirs(filepath)
+            create_student_nb(ifile, ofile)
+            create_student_json(ifile, jfile)
+
+    else:
+        ##
+        ## grades student notebooks
+        ##
+        for ifile, jfile in zip(infiles, jsonfiles):
+            
+            grade_student_nb(ifile, jfile)
+
+
+
+    
